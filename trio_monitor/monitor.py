@@ -9,7 +9,7 @@ from types import FunctionType
 
 from async_generator._impl import ANextIter
 
-from trio import Queue, WouldBlock, BrokenStreamError
+from trio import Queue, WouldBlock, BrokenStreamError, serve_tcp
 from trio._highlevel_serve_listeners import _run_handler
 from ._version import __version__
 from trio.abc import Instrument
@@ -18,6 +18,9 @@ from trio.hazmat import current_task, Task
 
 # inspiration: https://github.com/python-trio/trio/blob/master/notes-to-self/print-task-tree.py
 # additional credit: python-trio/trio#429 (You are being ratelimited)
+
+
+DEFAULT_PORT = 14761
 
 
 def walk_coro_stack(coro):
@@ -135,6 +138,13 @@ class Monitor(Instrument):
         Use this as a callback from a listener.
         """
         return await self.main_loop(stream)
+
+    async def serve(self, port=None):
+        """Serve the monitor over a TCP socket.
+        """
+        await serve_tcp(
+            self.listen_on_stream, 
+            DEFAULT_PORT if port is None else port)
 
     async def main_loop(self, stream):
         """Runs the main loop of the monitor.
@@ -354,6 +364,11 @@ _patch_monitor()
 del _patch_monitor
 
 
+async def serve(port=None):
+    monitor = Monitor()
+    await monitor.serve(port=port)
+
+
 def main():
     import argparse
     import telnetlib
@@ -366,7 +381,7 @@ def main():
         help="The address to connect to"
     )
     parser.add_argument(
-        "-p", "--port", default=14761, help="The port to connect to"
+        "-p", "--port", default=DEFAULT_PORT, help="The port to connect to"
     )
 
     args = parser.parse_args()
