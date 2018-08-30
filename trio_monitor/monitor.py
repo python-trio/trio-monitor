@@ -13,7 +13,7 @@ from trio import Queue, WouldBlock, BrokenStreamError, serve_tcp
 from trio._highlevel_serve_listeners import _run_handler
 from ._version import __version__
 from trio.abc import Instrument
-from trio.hazmat import current_task, Task
+from trio.hazmat import current_task, Task, add_instrument, remove_instrument
 
 
 # inspiration: https://github.com/python-trio/trio/blob/master/notes-to-self/print-task-tree.py
@@ -365,8 +365,15 @@ del _patch_monitor
 
 
 async def serve(port=None):
+    """Will create a monitor, register it as an instrument with trio, and serve
+    the monitor on `port`.
+    """
     monitor = Monitor()
-    await monitor.serve(port=port)
+    remove_instrument(monitor)
+    try:
+        await monitor.serve(port=port)
+    finally:
+        remove_instrument(monitor)
 
 
 def main():
