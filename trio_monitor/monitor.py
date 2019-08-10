@@ -1,3 +1,4 @@
+import math
 import inspect
 import os
 import random
@@ -9,11 +10,11 @@ from types import FunctionType
 
 from async_generator._impl import ANextIter
 
-from trio import Queue, WouldBlock, BrokenStreamError
 from trio._highlevel_serve_listeners import _run_handler
 from ._version import __version__
 from trio.abc import Instrument
 from trio.hazmat import current_task, Task
+import trio
 
 
 # inspiration: https://github.com/python-trio/trio/blob/master/notes-to-self/print-task-tree.py
@@ -33,6 +34,23 @@ def walk_coro_stack(coro):
             # A generator decorated with @types.coroutine
             yield coro.gi_frame, coro.gi_frame.f_lineno
             coro = coro.gi_yieldfrom
+
+
+class Queue():
+    def __init__(self, capacity=math.inf):
+        self.send_ch, self.recv_ch = trio.open_memory_channel(capacity)
+
+    def __aiter__(self):
+        return self
+
+    def put_nowait(self, message):
+        self.send_ch.send_nowait(message)
+
+    async def __anext__(self):
+        msg = await self.recv_ch.receive()
+        if not msg:
+            raise StopAsyncIteration
+        return msg
 
 
 class Monitor(Instrument):
@@ -59,7 +77,7 @@ class Monitor(Instrument):
         self._is_monitoring = False
         # semi-arbitrary size, because otherwise we'll be dropping events
         # no clue how to make this better, alas.
-        self._monitoring_queue = Queue(capacity=100)
+        self._monitoring_queue = Queue()
 
     @staticmethod
     def get_root_task() -> Task:
@@ -127,7 +145,7 @@ class Monitor(Instrument):
 
         try:
             self._monitoring_queue.put_nowait(item)
-        except WouldBlock:
+        except trio.WouldBlock:
             return
 
     async def listen_on_stream(self, stream):
@@ -167,7 +185,7 @@ class Monitor(Instrument):
                 finally:
                     self._is_monitoring = False
                     # empty out the queue
-                    self._monitoring_queue = Queue(capacity=100)
+                    self._monitoring_queue = Queue()
 
             try:
                 fn = getattr(self, "command_{}".format(name))
@@ -242,7 +260,7 @@ class Monitor(Instrument):
 
             try:
                 await stream.send_all(message.encode("ascii") + b'\n')
-            except BrokenStreamError:  # client disconnected on us
+            except trio.BrokenResourceError:  # client disconnected on us
                 return
 
     # command definitions
