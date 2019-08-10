@@ -13,3 +13,4 @@ async def test_monitor_connect():
         await cli.send_all(b"ps\r\n")
         ps = await cli.receive_some()
         assert b"trio.serve_tcp" in ps
+        nursery.cancel_scope.cancel()
