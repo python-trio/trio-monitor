@@ -34,7 +34,6 @@ setup(
         "Programming Language :: Python :: Implementation :: PyPy",
         "Development Status :: 3 - Alpha",
         "Environment :: Console",
-
         # COOKIECUTTER-TRIO-TODO: Consider adding trove classifiers for:
         #
         # - Development Status
