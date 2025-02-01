@@ -42,6 +42,7 @@ class Monitor(Instrument):
     The monitor protocol is a simple text-based protocol, accessible from a
     telnet client, for example.
     """
+
     MID_PREFIX = "|─ "
     MID_CONTINUE = "|  "
     END_PREFIX = "\─ "
@@ -52,9 +53,7 @@ class Monitor(Instrument):
 
         # authentication for running code in a frame
         rand = random.SystemRandom()
-        self.auth_pin = ''.join(
-            rand.choice(string.ascii_letters) for x in range(0, 8)
-        )
+        self.auth_pin = "".join(rand.choice(string.ascii_letters) for x in range(0, 8))
 
         self._is_monitoring = False
         # semi-arbitrary size, because otherwise we'll be dropping events
@@ -114,7 +113,7 @@ class Monitor(Instrument):
         if not self._is_monitoring:
             return
 
-        if 'task' in item[0]:
+        if "task" in item[0]:
             task = item[1]
             # idk how to make this better.
             if task.coro.cr_code == _run_handler.__code__:
@@ -122,7 +121,7 @@ class Monitor(Instrument):
                     loc = task.coro.cr_frame.f_locals
 
                     # if it's our own handler, skip it!
-                    if loc['handler'] == self.listen_on_stream:
+                    if loc["handler"] == self.listen_on_stream:
                         return
 
         try:
@@ -137,8 +136,7 @@ class Monitor(Instrument):
         return await self.main_loop(stream)
 
     async def main_loop(self, stream):
-        """Runs the main loop of the monitor.
-        """
+        """Runs the main loop of the monitor."""
         # send the banner
         version = __version__
         await stream.send_all(
@@ -172,9 +170,7 @@ class Monitor(Instrument):
             try:
                 fn = getattr(self, "command_{}".format(name))
             except AttributeError:
-                await stream.send_all(
-                    b"No such command: " + name.encode() + b"\n"
-                )
+                await stream.send_all(b"No such command: " + name.encode() + b"\n")
                 continue
 
             try:
@@ -182,21 +178,18 @@ class Monitor(Instrument):
             except Exception as e:
                 messages = ["takes at most", "required positional argument"]
 
-                if isinstance(e, TypeError) and \
-                        any(x in ' '.join(e.args) for x in messages):
+                if isinstance(e, TypeError) and any(
+                    x in " ".join(e.args) for x in messages
+                ):
                     # hacky, but idk what else to do
-                    await stream.send_all(
-                        ' '.join(e.args).encode("ascii") + b"\n"
-                    )
+                    await stream.send_all(" ".join(e.args).encode("ascii") + b"\n")
                     continue
 
-                errormessage = type(e).__name__ + ": " + ' '.join(e.args)
+                errormessage = type(e).__name__ + ": " + " ".join(e.args)
                 await stream.send_all(b"Error: " + errormessage.encode())
                 raise
 
-            await stream.send_all(
-                "\n".join(lines).encode(encoding="ascii") + b"\n"
-            )
+            await stream.send_all("\n".join(lines).encode(encoding="ascii") + b"\n")
 
     # monitor feed
     async def do_monitor(self, stream):
@@ -222,8 +215,7 @@ class Monitor(Instrument):
 
             elif key == "after_io_wait":
                 timeout = item[1]
-                message = "Done waiting for IO (timeout: {:.3f})" \
-                    .format(timeout)
+                message = "Done waiting for IO (timeout: {:.3f})".format(timeout)
 
             elif key == "before_task_step":
                 task = item[1]
@@ -231,9 +223,7 @@ class Monitor(Instrument):
 
             elif key == "after_task_step":
                 task = item[1]
-                message = "Task finished stepping: {} ({})".format(
-                    task.name, id(task)
-                )
+                message = "Task finished stepping: {} ({})".format(task.name, id(task))
 
             else:
                 message = "Unknown event: {}".format(key)
@@ -241,7 +231,7 @@ class Monitor(Instrument):
             message = prefix + message
 
             try:
-                await stream.send_all(message.encode("ascii") + b'\n')
+                await stream.send_all(message.encode("ascii") + b"\n")
             except BrokenStreamError:  # client disconnected on us
                 return
 
@@ -251,8 +241,7 @@ class Monitor(Instrument):
         name_rpad = 12
 
         def pred(i):
-            return hasattr(i, "__name__") \
-                   and i.__name__.startswith("command_")
+            return hasattr(i, "__name__") and i.__name__.startswith("command_")
 
         commands = inspect.getmembers(self, predicate=pred)
         lines = ["Commands:"]
@@ -280,14 +269,14 @@ class Monitor(Instrument):
     async def command_ps(self):
         """Gets the current list of tasks."""
         lines = []
-        headers = ('ID', 'Name', 'Parent')
+        headers = ("ID", "Name", "Parent")
         widths = (15, 50, 15)
         header_line = []
 
         for name, width in zip(headers, widths):
             header_line.append(name.ljust(width))
 
-        lines.append(' '.join(header_line))
+        lines.append(" ".join(header_line))
         lines.append("-" * sum(widths))
 
         for task in self.flatten_tasks():
@@ -303,7 +292,7 @@ class Monitor(Instrument):
 
             result = [str(id(task)).ljust(widths[0]), name.ljust(49), parent]
 
-            lines.append(' '.join(result))
+            lines.append(" ".join(result))
 
         return lines
 
@@ -320,7 +309,7 @@ class Monitor(Instrument):
 
         summary = traceback.StackSummary.extract(walk_coro_stack(task.coro))
         lines = summary.format()
-        lines = [line.rstrip('\n') for line in lines]
+        lines = [line.rstrip("\n") for line in lines]
         return lines
 
     # stub commands
@@ -360,14 +349,9 @@ def main():
 
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "-a",
-        "--address",
-        default="127.0.0.1",
-        help="The address to connect to"
+        "-a", "--address", default="127.0.0.1", help="The address to connect to"
     )
-    parser.add_argument(
-        "-p", "--port", default=14761, help="The port to connect to"
-    )
+    parser.add_argument("-p", "--port", default=14761, help="The port to connect to")
 
     args = parser.parse_args()
     # TODO: Potentially wrap sys.stdin for better readline
