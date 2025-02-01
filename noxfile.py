@@ -16,8 +16,8 @@ def precommit(session):
 
 @nox.session
 def test(session):
-    session.install("-r", "test-requirements.txt")
     session.install(".")
+    session.install("-r", "test-requirements.txt")
     run_tests(session)
 
 
@@ -35,9 +35,7 @@ def test_oldest(session):
         "3.8": "trio",
     }
 
-    session.install(
-        ".", possible_trio[pyver], "--resolution=lowest-direct", silent=True
-    )
+    session.install(".", possible_trio[pyver], "--resolution=lowest-direct")
     session.install("pip")
     versions = session.run("pip", "freeze", silent=True)
 

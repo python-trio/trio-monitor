@@ -24,7 +24,6 @@ jobs:
 
       - run: pip install uv nox
       - run: nox -s test test_oldest
-      # TODO: combine coverage
 
       - name: upload coverage
         if: always()
