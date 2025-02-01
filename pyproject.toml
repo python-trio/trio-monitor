@@ -9,8 +9,8 @@ name = "trio-monitor"
 description = "A monitor utility for Trio"
 readme = "README.rst"
 license = "MIT OR Apache-2.0"
-dependencies = ["trio>=0.15.0"]
-requires-python = ">=3.8"
+dependencies = ["trio>=0.19.0"]
+requires-python = ">=3.9"
 authors = [
 	{ name = "Lura Skye", email = "fuyukaii@proton.me" }
 ]

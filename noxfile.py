@@ -31,8 +31,7 @@ def test_oldest(session):
         "3.12": "trio>=0.23.0",
         "3.11": "trio>=0.21.0",
         "3.10": "trio>=0.20.0",
-        "3.9": "trio>=0.19.0",
-        "3.8": "trio",
+        "3.9": "trio",
     }
 
     session.install(".", possible_trio[pyver], "--resolution=lowest-direct")

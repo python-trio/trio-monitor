@@ -54,7 +54,7 @@ class Monitor(Instrument):
         self._is_monitoring = False
         # semi-arbitrary size, because otherwise we'll be dropping events
         # no clue how to make this better, alas.
-        self._rx, self._tx = open_memory_channel(math.inf)
+        self._rx, self._tx = open_memory_channel(100)
 
     @staticmethod
     def get_root_task() -> Task:
@@ -121,7 +121,7 @@ class Monitor(Instrument):
                         return
 
         try:
-            self._monitoring_queue.put_nowait(item)
+            self._tx.send_nowait(item)
         except WouldBlock:
             return
 
@@ -191,7 +191,8 @@ class Monitor(Instrument):
     async def do_monitor(self, stream):
         """Livefeeds information about the running program."""
         prefix = "[FEED] "
-        async for item in self._monitoring_queue:
+        while True:
+            item = await self._rx.receive()
             key = item[0]
 
             if key == "task_spawned":
