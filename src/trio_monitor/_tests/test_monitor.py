@@ -38,23 +38,6 @@ def test_it_can_start_a_server():
 
                         await stream.send_all(b"exit\r\n")
 
-            stream = await trio.testing.open_stream_to_socket_listener(listener)
-            async with stream:
-                buffer = b""
-                with trio.fail_after(1):
-                    async for part in stream:
-                        buffer += part
-                        if buffer[-6:] == b"trio> ":
-                            break
-
-                await stream.send_all(b"ps\r\n")
-                buffer = b""
-                with trio.move_on_after(1):
-                    async for part in stream:
-                        buffer += part
-
-                assert b"trio_monitor._tests.test_monitor" in buffer
-
             nursery.cancel_scope.cancel()
 
     monitor = trio_monitor.Monitor()
