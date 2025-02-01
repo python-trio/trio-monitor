@@ -1,3 +1,3 @@
 """Top-level package for trio-monitor."""
 
-from ._version import __version__
+from ._version import __version__ as __version__

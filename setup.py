@@ -1,5 +1,6 @@
 from setuptools import setup, find_packages
 
+__version__ = None  # temp because ruff hates things
 exec(open("trio_monitor/_version.py", encoding="utf-8").read())
 
 LONG_DESC = open("README.rst", encoding="utf-8").read()
