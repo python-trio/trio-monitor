@@ -25,20 +25,19 @@ jobs:
       - run: pip install uv nox
 
       - run: nox -s test
-      # TODO: combine 
+      # TODO: combine coverage
 
-  # TODO: switch things to pre-commit
-  # lint:
-  #   name: lint
-  #   runs-on: ubuntu-latest
-  #   timeout-minutes: 5
+  lint:
+    name: lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
 
-  #   steps:
-  #     - uses: actions/checkout@v3
-  #     - uses: actions/setup-python@v5
-  #       with:
-  #         python-version: 3.13
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v5
+        with:
+          python-version: 3.13
 
-  #     - uses: pre-commit/action@v3
-  #     - uses: pre-commit-ci/lite-action@v1.1.0
-  #       if: always()
+      - uses: pre-commit/action@v3.0.1
+      - uses: pre-commit-ci/lite-action@v1.1.0
+        if: always()

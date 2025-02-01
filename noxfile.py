@@ -9,9 +9,9 @@ nox.options.default_venv_backend = "uv|virtualenv"
 
 
 @nox.session
-def autoformat(session):
-    session.install("black")
-    session.run("black", ".")
+def precommit(session):
+    session.install("pre-commit")
+    session.run("pre-commit", "run", "-a")
 
 
 @nox.session
