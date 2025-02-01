@@ -1,4 +1,5 @@
 import nox
+import os
 
 nox.options.reuse_venv = "yes"
 nox.options.error_on_external_run = True
@@ -18,6 +19,10 @@ def test(session):
     session.install(".")
     session.install("-r", "test-requirements.txt")
     session.run(
+        "coverage",
+        "run",
+        "--rcfile=.coveragerc",
+        "-m",
         "pytest",
         "-W",
         "error",
@@ -25,7 +30,16 @@ def test(session):
         "-v",
         "--pyargs",
         "trio_monitor",
-        "--cov=trio_monitor",
-        "--cov-config=.coveragerc",
         "--verbose",
+        *session.posargs,
     )
+    session.notify("coverage")
+
+
+@nox.session(default=False)
+def coverage(session):
+    session.install("-r", "test-requirements.txt")
+    session.run("coverage", "combine")
+    session.run("coverage", "report")
+
+    os.remove(".coverage")
