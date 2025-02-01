@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    name: ${{ matrix.platform }}/${{ matrix.python }} tests
+    runs-on: ${{ matrix.platform }}-latest
+    timeout-minutes: 5
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.9", "3.10", "3.11", "3.12", "3.13", "pypy-3.10"]
+        platform: ["windows", "ubuntu", "macos"]
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+          allow-prereleases: true
+
+      - run: pip install uv nox
+
+      - run: nox -s test
+      # TODO: combine 
+
+  # TODO: switch things to pre-commit
+  # lint:
+  #   name: lint
+  #   runs-on: ubuntu-latest
+  #   timeout-minutes: 5
+
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - uses: actions/setup-python@v5
+  #       with:
+  #         python-version: 3.13
+
+  #     - uses: pre-commit/action@v3
+  #     - uses: pre-commit-ci/lite-action@v1.1.0
+  #       if: always()
