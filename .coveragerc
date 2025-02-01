@@ -11,6 +11,5 @@ exclude_lines =
 
 [paths]
 source=
-  .
+  src
   .nox/test*/**/site-packages
-  **/trio-monitor
