@@ -12,7 +12,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python: ["3.9", "3.10", "3.11", "3.12", "3.13", "pypy-3.10"]
+        python: ["3.8", "3.9", "3.10", "3.11", "3.12", "3.13", "pypy-3.10"]
         platform: ["windows", "ubuntu", "macos"]
 
     steps:
@@ -23,7 +23,7 @@ jobs:
           allow-prereleases: true
 
       - run: pip install uv nox
-      - run: nox -s test
+      - run: nox -s test test_oldest
       # TODO: combine coverage
 
       - name: upload coverage
