@@ -60,7 +60,7 @@ parallel = true
 source = ["trio_monitor"]
 
 [tool.coverage.paths]
-source = ["src", ".nox/test*/**/site-packages"]
+source = ["src", "**/.nox/test*/**/site-packages"]
 
 [tool.coverage.report]
 precision = 1
