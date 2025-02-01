@@ -5,15 +5,14 @@ import signal
 import string
 import sys
 import traceback
+import math
+import importlib.metadata
 from types import FunctionType
 
-from async_generator._impl import ANextIter
-
-from trio import Queue, WouldBlock, BrokenStreamError
+from trio import WouldBlock, open_memory_channel, BrokenResourceError
 from trio._highlevel_serve_listeners import _run_handler
-from ._version import __version__
 from trio.abc import Instrument
-from trio.hazmat import current_task, Task
+from trio.lowlevel import current_task, Task
 
 
 # inspiration: https://github.com/python-trio/trio/blob/master/notes-to-self/print-task-tree.py
@@ -26,9 +25,6 @@ def walk_coro_stack(coro):
             # A real coroutine
             yield coro.cr_frame, coro.cr_frame.f_lineno
             coro = coro.cr_await
-        elif isinstance(coro, ANextIter):
-            # black hole
-            return
         else:
             # A generator decorated with @types.coroutine
             yield coro.gi_frame, coro.gi_frame.f_lineno
@@ -58,7 +54,7 @@ class Monitor(Instrument):
         self._is_monitoring = False
         # semi-arbitrary size, because otherwise we'll be dropping events
         # no clue how to make this better, alas.
-        self._monitoring_queue = Queue(capacity=100)
+        self._rx, self._tx = open_memory_channel(math.inf)
 
     @staticmethod
     def get_root_task() -> Task:
@@ -138,7 +134,7 @@ class Monitor(Instrument):
     async def main_loop(self, stream):
         """Runs the main loop of the monitor."""
         # send the banner
-        version = __version__
+        version = importlib.metadata.version("trio")
         await stream.send_all(
             b"Connected to the Trio monitor, using "
             b"trio " + version.encode(encoding="ascii") + b"\n"
@@ -165,7 +161,7 @@ class Monitor(Instrument):
                 finally:
                     self._is_monitoring = False
                     # empty out the queue
-                    self._monitoring_queue = Queue(capacity=100)
+                    self._tx, self._rx = open_memory_channel(math.inf)
 
             try:
                 fn = getattr(self, "command_{}".format(name))
@@ -232,7 +228,7 @@ class Monitor(Instrument):
 
             try:
                 await stream.send_all(message.encode("ascii") + b"\n")
-            except BrokenStreamError:  # client disconnected on us
+            except BrokenResourceError:  # client disconnected on us
                 return
 
     # command definitions
