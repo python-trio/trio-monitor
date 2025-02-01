@@ -5,7 +5,7 @@ on:
   pull_request:
 
 jobs:
-  test:
+  tests:
     name: ${{ matrix.platform }}/${{ matrix.python }} tests
     runs-on: ${{ matrix.platform }}-latest
     timeout-minutes: 5
@@ -23,9 +23,40 @@ jobs:
           allow-prereleases: true
 
       - run: pip install uv nox
-
       - run: nox -s test
       # TODO: combine coverage
+
+      - name: upload coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-data-${{ matrix.platform }}-${{ matrix.python }}
+          path: .coverage.*
+          include-hidden-files: true
+          if-no-files-found: ignore
+
+  coverage:
+    name: combine and check coverage
+    if: always()
+    needs: tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: coverage-data-*
+          merge-multiple: true
+
+      - run: |
+          pip install -r test-requirements.txt
+          coverage combine
+
+          coverage report --format=markdown >> $GITHUB_STEP_SUMMARY
+          coverage report --fail-under=0
 
   lint:
     name: lint

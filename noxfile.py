@@ -21,7 +21,6 @@ def test(session):
     session.run(
         "coverage",
         "run",
-        "--rcfile=.coveragerc",
         "-m",
         "pytest",
         "-W",
@@ -33,7 +32,9 @@ def test(session):
         "--verbose",
         *session.posargs,
     )
-    session.notify("coverage")
+
+    if os.environ.get("CI") != "true":
+        session.notify("coverage")
 
 
 @nox.session(default=False)
