@@ -53,3 +53,15 @@ issue_format = "`#{issue} <https://github.com/python-trio/trio-monitor/issues/{i
 faulthandler_timeout = 60
 xfail_strict = true
 trio_mode = true
+
+[tool.coverage.run]
+branch = true
+parallel = true
+source = ["trio_monitor"]
+
+[tool.coverage.paths]
+source = ["src", ".nox/test*/**/site-packages"]
+
+[tool.coverage.report]
+precision = 1
+exclude_lines = ["pragma: no cover", "abc.abstractmethod"]
