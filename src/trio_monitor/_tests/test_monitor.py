@@ -51,3 +51,46 @@ async def test_close_socket_before_start(nursery, autojump_clock):
     stream = await trio.testing.open_stream_to_socket_listener(listeners[0])
     await stream.aclose()
     await trio.sleep(1)
+
+
+def test_monitor_program():
+    monitor = trio_monitor.Monitor()
+
+    async def main():
+        async with trio.open_nursery() as nursery:
+            tx, rx = trio.testing.memory_stream_one_way_pair()
+            nursery.start_soon(monitor.do_monitor, tx)
+
+            await trio.testing.wait_all_tasks_blocked()
+            monitor._is_monitoring = True
+
+            nursery.start_soon(trio.lowlevel.checkpoint)
+            await trio.lowlevel.checkpoint()
+            await trio.lowlevel.checkpoint()
+            await trio.lowlevel.checkpoint()
+            # ^ this is necessary because monitor breaks
+            #   trio.testing.wait_all_tasks_blocked()...
+            #   (at least in conjunction with autojump clock)
+
+            monitor._is_monitoring = False
+            buffer = b""
+            while True:
+                with trio.move_on_after(1) as cs:
+                    buffer += await rx.receive_some()
+
+                if cs.cancelled_caught:
+                    break
+
+            assert b"Task spawned: trio.lowlevel.checkpoint" in buffer
+            assert b"Task scheduled: trio.lowlevel.checkpoint" in buffer
+            assert b"Task stepping: trio.lowlevel.checkpoint" in buffer
+            assert b"Task finished stepping: trio.lowlevel.checkpoint" in buffer
+            assert b"Task exited: trio.lowlevel.checkpoint" in buffer
+
+            nursery.cancel_scope.cancel()
+
+        # copied from `main_loop` :/
+        monitor._is_monitoring = False
+        monitor._tx, monitor._rx = trio.open_memory_channel(100)
+
+    run_with_monitor(main, monitor)

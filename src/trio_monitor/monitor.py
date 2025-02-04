@@ -5,7 +5,6 @@ import signal
 import string
 import sys
 import traceback
-import math
 import importlib.metadata
 from types import FunctionType
 
@@ -54,7 +53,7 @@ class Monitor(Instrument):
         self._is_monitoring = False
         # semi-arbitrary size, because otherwise we'll be dropping events
         # no clue how to make this better, alas.
-        self._rx, self._tx = open_memory_channel(100)
+        self._tx, self._rx = open_memory_channel(100)
 
     @staticmethod
     def get_root_task() -> Task:
@@ -161,7 +160,7 @@ class Monitor(Instrument):
                 finally:
                     self._is_monitoring = False
                     # empty out the queue
-                    self._tx, self._rx = open_memory_channel(math.inf)
+                    self._tx, self._rx = open_memory_channel(100)
 
             try:
                 fn = getattr(self, "command_{}".format(name))

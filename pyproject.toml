@@ -68,3 +68,7 @@ source = ["src", "**/.nox/test*/**/site-packages"]
 [tool.coverage.report]
 precision = 1
 exclude_lines = ["pragma: no cover", "abc.abstractmethod"]
+
+[tool.uv]
+# make sure that nox reinstalls trio-monitor
+reinstall-package = ["trio-monitor"]
