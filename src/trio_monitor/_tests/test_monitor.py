@@ -65,12 +65,7 @@ def test_monitor_program():
             monitor._is_monitoring = True
 
             nursery.start_soon(trio.lowlevel.checkpoint)
-            await trio.lowlevel.checkpoint()
-            await trio.lowlevel.checkpoint()
-            await trio.lowlevel.checkpoint()
-            # ^ this is necessary because monitor breaks
-            #   trio.testing.wait_all_tasks_blocked()...
-            #   (at least in conjunction with autojump clock)
+            await trio.testing.wait_all_tasks_blocked()
 
             monitor._is_monitoring = False
             buffer = b""

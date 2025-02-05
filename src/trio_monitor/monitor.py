@@ -118,6 +118,8 @@ class Monitor(Instrument):
                     # if it's our own handler, skip it!
                     if loc["handler"] == self.listen_on_stream:
                         return
+            if task.coro.cr_code == self.do_monitor.__code__:
+                return
 
         try:
             self._tx.send_nowait(item)
