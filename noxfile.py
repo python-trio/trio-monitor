@@ -18,6 +18,37 @@ def precommit(session):
 def test(session):
     session.install(".")
     session.install("-r", "test-requirements.txt")
+    run_tests(session)
+
+
+@nox.session(venv_backend="uv")
+def test_oldest(session):
+    pyver = session.run("python", "--version", silent=True)
+    pyver = ".".join(pyver.split(" ")[1].split(".")[:2])
+    # based on classifiers
+    possible_trio = {
+        "3.13": "trio>=0.26.0",
+        "3.12": "trio>=0.23.0",
+        "3.11": "trio>=0.21.0",
+        "3.10": "trio>=0.20.0",
+        "3.9": "trio",
+    }
+
+    session.install(".", possible_trio[pyver], "--resolution=lowest-direct")
+    session.install("pip")
+    versions = session.run("pip", "freeze", silent=True)
+
+    # make sure we don't change the trio version
+    session.install(
+        "-r",
+        "test-requirements.txt",
+        *[line for line in versions.split() if line.startswith("trio==")],
+    )
+
+    run_tests(session)
+
+
+def run_tests(session):
     session.run(
         "coverage",
         "run",

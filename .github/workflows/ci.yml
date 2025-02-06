@@ -23,8 +23,7 @@ jobs:
           allow-prereleases: true
 
       - run: pip install uv nox
-      - run: nox -s test
-      # TODO: combine coverage
+      - run: nox -s test test_oldest
 
       - name: upload coverage
         if: always()
